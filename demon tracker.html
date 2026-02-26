@@ -1,0 +1,3728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GD Progress Tracker — Track your Geometry Dash demon completions, practice runs, noclip deaths and daily sessions.">
+    <meta name="author" content="GD Progress Tracker">
+    <meta property="og:title" content="GD Progress Tracker">
+    <meta property="og:description" content="Track your Geometry Dash demon completions, practice runs, noclip deaths and daily sessions.">
+    <meta property="og:type" content="website">
+    <title>GD Progress Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-card: #141824;
+            --bg-hover: #1a1f2e;
+            --accent-primary: #00d9ff;
+            --accent-secondary: #ff00ff;
+            --accent-gold: #ffd700;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a8b8;
+            --easy: #7bed9f;
+            --medium: #ffd700;
+            --hard: #ff6b6b;
+            --insane: #da70d6;
+            --extreme: #2f2f2f;
+            --border: #2a2f3e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(255, 0, 255, 0.05) 0%, transparent 50%);
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.5s ease;
+        }
+
+        body.has-background::before {
+            opacity: 0.15;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #1a1f2e 100%);
+            border-bottom: 2px solid var(--border);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+            letter-spacing: 2px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-btn:hover::before {
+            left: 100%;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+
+        .add-demon-form {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        input, select, textarea {
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 217, 255, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .demons-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .demon-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demon-card.in-progress {
+            border-left-color: var(--medium);
+        }
+
+        .demon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.05), transparent);
+            pointer-events: none;
+        }
+
+        .demon-card:hover {
+            border-left-width: 6px;
+            box-shadow: 0 8px 32px rgba(0, 217, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .demon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .demon-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .difficulty-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .difficulty-easy { background: var(--easy); color: #000; }
+        .difficulty-medium { background: var(--medium); color: #000; }
+        .difficulty-hard { background: var(--hard); color: #fff; }
+        .difficulty-insane { background: var(--insane); color: #fff; }
+        .difficulty-extreme { background: var(--extreme); color: #fff; border: 2px solid #fff; }
+
+        .demon-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-fini {
+            background: rgba(123, 237, 159, 0.2);
+            color: var(--easy);
+            border: 1px solid var(--easy);
+        }
+
+        .status-encours {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--medium);
+            border: 1px solid var(--medium);
+        }
+
+        .demon-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-small:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-delete {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: var(--hard);
+            color: var(--hard);
+        }
+
+        .btn-delete:hover {
+            background: var(--hard);
+            color: white;
+        }
+
+        .btn-complete {
+            background: rgba(123, 237, 159, 0.2);
+            border-color: var(--easy);
+            color: var(--easy);
+        }
+
+        .btn-complete:hover {
+            background: var(--easy);
+            color: black;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.05), transparent);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .stat-card-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .stat-card-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-primary);
+        }
+
+        .difficulty-bar {
+            margin-bottom: 1.5rem;
+        }
+
+        .difficulty-bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .difficulty-bar-fill {
+            height: 30px;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .filters {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .comment {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        /* Checklist styles */
+        .checklist-container {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Header with title + edit toggle */
+        .checklist-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .checklist-edit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 1rem;
+            background: transparent;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .checklist-edit-btn:hover,
+        .checklist-edit-btn.active {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(0, 217, 255, 0.08);
+        }
+
+        /* Progress bar at top of checklist */
+        .checklist-progress-bar-wrapper {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 3px;
+            margin-bottom: 1.75rem;
+            overflow: hidden;
+        }
+        .checklist-progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--easy));
+            transition: width 0.4s ease;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.6rem;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .checklist-item:hover {
+            border-color: var(--accent-primary);
+            transform: translateX(4px);
+        }
+
+        /* Edit mode — item stops sliding and shows controls */
+        .checklist-item.edit-mode {
+            cursor: default;
+            border-color: rgba(0, 217, 255, 0.25);
+        }
+        .checklist-item.edit-mode:hover {
+            transform: none;
+            border-color: rgba(0, 217, 255, 0.4);
+        }
+
+        /* Drag handle */
+        .checklist-drag-handle {
+            display: none;
+            cursor: grab;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            padding: 0.1rem 0.2rem;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+        .checklist-drag-handle:active { cursor: grabbing; }
+        .checklist-drag-handle:hover { color: var(--accent-primary); }
+        .edit-mode .checklist-drag-handle { display: flex; align-items: center; }
+
+        .checklist-item.checked {
+            background: rgba(123, 237, 159, 0.1);
+            border-color: var(--easy);
+        }
+        .checklist-item.checked.edit-mode {
+            background: rgba(123, 237, 159, 0.07);
+            border-color: rgba(123, 237, 159, 0.35);
+        }
+
+        .checklist-checkbox {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .checklist-item.checked .checklist-checkbox {
+            background: var(--easy);
+            border-color: var(--easy);
+            color: black;
+        }
+
+        /* Inline edit input (edit mode) */
+        .checklist-text {
+            flex: 1;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+        .checklist-text-input {
+            flex: 1;
+            background: rgba(0, 217, 255, 0.07);
+            border: 1px solid var(--accent-primary);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            padding: 0.3rem 0.6rem;
+            outline: none;
+            display: none;
+        }
+        .checklist-text-input:focus { border-color: var(--accent-secondary); }
+
+        .checklist-item.checked .checklist-text {
+            color: var(--easy);
+        }
+
+        /* Delete button (only in edit mode) */
+        .checklist-delete-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .edit-mode .checklist-delete-btn { display: flex; align-items: center; }
+        .checklist-delete-btn:hover { background: rgba(255,107,107,0.2); color: var(--hard); }
+
+        /* Dragging ghost */
+        .checklist-item.dragging {
+            opacity: 0.4;
+            border-style: dashed;
+        }
+        .checklist-item.drag-over {
+            border-color: var(--accent-secondary);
+            background: rgba(255, 0, 255, 0.06);
+            transform: none;
+        }
+
+        .add-checklist-item {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .add-checklist-item input {
+            flex: 1;
+        }
+
+        /* Reset checklist button */
+        .checklist-reset-btn {
+            margin-top: 1rem;
+            padding: 0.5rem 1.2rem;
+            background: transparent;
+            border: 1px solid rgba(255,107,107,0.4);
+            border-radius: 8px;
+            color: var(--hard);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .checklist-reset-btn:hover { background: rgba(255,107,107,0.1); border-color: var(--hard); }
+
+        /* Progress bar for in-progress demons */
+        .progress-container {
+            margin-top: 1rem;
+            background: var(--bg-dark);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .progress-bar-wrapper {
+            background: rgba(0, 0, 0, 0.3);
+            height: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+        }
+
+        /* === Progress update grid styles === */
+        .progress-update-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-update-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .progress-update-field label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-update-field input {
+            padding: 0.6rem 0.75rem;
+            font-size: 1rem;
+        }
+
+        .progress-update-btn {
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(255, 0, 255, 0.2));
+            border: 2px solid var(--accent-primary);
+            border-radius: 6px;
+            color: var(--accent-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .progress-update-btn:hover {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4);
+        }
+
+        .attempts-live-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(0, 217, 255, 0.05);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .attempts-live-counter span {
+            color: var(--accent-primary);
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+        }
+        /* ============================================================ */
+
+        /* === RUNS SYSTEM === */
+        .runs-section {
+            margin-top: 1rem;
+            background: rgba(255, 215, 0, 0.04);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .runs-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 215, 0, 0.08);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .runs-section-header:hover {
+            background: rgba(255, 215, 0, 0.14);
+        }
+
+        .runs-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .runs-section-toggle {
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            transition: transform 0.3s ease;
+        }
+
+        .runs-section-toggle.open {
+            transform: rotate(180deg);
+        }
+
+        .runs-section-body {
+            padding: 1rem;
+            display: none;
+        }
+
+        .runs-section-body.open {
+            display: block;
+        }
+
+        /* Add run form */
+        .add-run-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.6rem;
+            align-items: end;
+            margin-bottom: 1rem;
+        }
+
+        .add-run-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .add-run-field label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .add-run-field input {
+            padding: 0.55rem 0.7rem;
+            font-size: 0.95rem;
+        }
+
+        .add-run-btn {
+            padding: 0.55rem 1rem;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2));
+            border: 2px solid var(--accent-gold);
+            border-radius: 6px;
+            color: var(--accent-gold);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+
+        .add-run-btn:hover {
+            background: var(--accent-gold);
+            color: #000;
+        }
+
+        /* Runs list */
+        .runs-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .run-entry {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .run-entry:hover {
+            border-color: var(--accent-gold);
+            background: rgba(255, 215, 0, 0.04);
+        }
+
+        /* Rank badge */
+        .run-rank {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 900;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .run-rank-1 { background: #ffd700; color: #000; }
+        .run-rank-2 { background: #c0c0c0; color: #000; }
+        .run-rank-3 { background: #cd7f32; color: #fff; }
+        .run-rank-other { background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); font-size: 0.7rem; }
+
+        /* Mini run bar */
+        .run-bar-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .run-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.2rem;
+        }
+
+        .run-range {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .run-completion {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+        }
+
+        .run-completion-full {
+            background: rgba(123, 237, 159, 0.2);
+            color: var(--easy);
+            border: 1px solid var(--easy);
+        }
+
+        .run-completion-high {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .run-completion-mid {
+            background: rgba(255, 107, 107, 0.15);
+            color: var(--hard);
+            border: 1px solid var(--hard);
+        }
+
+        .run-mini-bar-bg {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .run-mini-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .run-date {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            min-width: 70px;
+            text-align: right;
+        }
+
+        .run-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.35rem;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+
+        .run-entry:hover .run-delete-btn {
+            opacity: 1;
+        }
+
+        .run-delete-btn:hover {
+            background: rgba(255, 107, 107, 0.2);
+            color: var(--hard);
+        }
+
+        .runs-empty {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .run-stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .run-stat-chip {
+            padding: 0.3rem 0.7rem;
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+        /* =================== */
+
+        /* === COVERAGE MAP === */
+        .coverage-map-wrapper {
+            margin-bottom: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+        }
+        .coverage-map-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .coverage-map-legend {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .coverage-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+        .coverage-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        /* The main track */
+        .coverage-track {
+            position: relative;
+            height: 22px;
+            background: rgba(0,0,0,0.35);
+            border-radius: 11px;
+            overflow: hidden;
+            margin-bottom: 0.4rem;
+        }
+        /* Normal mode bar (bottom layer) */
+        .coverage-normal-bar {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            border-radius: 11px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0.25;
+            transition: width 0.4s ease;
+        }
+        /* Segment layers (practice runs) */
+        .coverage-segment {
+            position: absolute;
+            top: 3px;
+            height: calc(100% - 6px);
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            cursor: default;
+        }
+        .coverage-segment:hover { opacity: 1; }
+        /* Tick marks every 10% */
+        .coverage-ticks {
+            position: relative;
+            height: 8px;
+        }
+        .coverage-tick {
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 5px;
+            background: rgba(160,168,184,0.3);
+            transform: translateX(-50%);
+        }
+        .coverage-tick-label {
+            position: absolute;
+            top: 5px;
+            font-size: 0.6rem;
+            color: rgba(160,168,184,0.5);
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        /* Grouped run row (multiple identical runs) */
+        .run-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,215,0,0.2);
+            border: 1px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            min-width: 28px;
+            white-space: nowrap;
+        }
+        /* =================== */
+
+        /* === PRACTICE FULL RUN SYSTEM === */
+        .practice-section {
+            margin-top: 0.75rem;
+            background: rgba(218, 112, 214, 0.04);
+            border: 1px solid rgba(218, 112, 214, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .practice-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(218, 112, 214, 0.08);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+        .practice-section-header:hover { background: rgba(218, 112, 214, 0.15); }
+        .practice-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--insane);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .practice-section-toggle {
+            font-size: 0.8rem;
+            color: var(--insane);
+            transition: transform 0.3s ease;
+        }
+        .practice-section-toggle.open { transform: rotate(180deg); }
+        .practice-section-body {
+            padding: 1rem;
+            display: none;
+        }
+        .practice-section-body.open { display: block; }
+        .add-practice-form {
+            display: grid;
+            grid-template-columns: 90px 1fr auto;
+            gap: 0.6rem;
+            align-items: end;
+            margin-bottom: 1rem;
+        }
+        .add-practice-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .add-practice-field label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .add-practice-field input { padding: 0.55rem 0.7rem; font-size: 0.95rem; }
+        .add-practice-btn {
+            padding: 0.55rem 1rem;
+            background: linear-gradient(135deg, rgba(218, 112, 214, 0.2), rgba(180, 80, 180, 0.2));
+            border: 2px solid var(--insane);
+            border-radius: 6px;
+            color: var(--insane);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .add-practice-btn:hover { background: var(--insane); color: #fff; }
+        .practice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .practice-entry {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        .practice-entry:hover {
+            border-color: var(--insane);
+            background: rgba(218, 112, 214, 0.04);
+        }
+        .practice-rank-1 { background: var(--insane); color: #fff; }
+        .practice-rank-2 { background: rgba(218,112,214,0.5); color: #fff; }
+        .practice-rank-3 { background: rgba(218,112,214,0.3); color: var(--insane); border: 1px solid var(--insane); }
+        .practice-attempts-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            min-width: 80px;
+        }
+        .practice-attempts-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            color: var(--insane);
+        }
+        .practice-attempts-lbl {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .practice-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .practice-date-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .practice-date-txt {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+        .practice-note-txt {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .practice-delta {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.12rem 0.45rem;
+            border-radius: 8px;
+        }
+        .practice-delta-better { background: rgba(123,237,159,0.15); color: var(--easy); border: 1px solid var(--easy); }
+        .practice-delta-worse  { background: rgba(255,107,107,0.15); color: var(--hard); border: 1px solid var(--hard); }
+        .practice-delta-same   { background: rgba(160,168,184,0.1); color: var(--text-secondary); border: 1px solid var(--border); }
+        .practice-pb-crown {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.15rem 0.5rem;
+            background: linear-gradient(135deg, rgba(218,112,214,0.25), rgba(255,0,255,0.1));
+            border: 1px solid var(--insane);
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--insane);
+        }
+        .practice-stats-row {
+            display: flex;
+            gap: 0.6rem;
+            margin-bottom: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .practice-stat-chip {
+            padding: 0.28rem 0.65rem;
+            background: rgba(218, 112, 214, 0.08);
+            border: 1px solid rgba(218, 112, 214, 0.25);
+            border-radius: 12px;
+            font-size: 0.78rem;
+            color: var(--insane);
+            font-weight: 600;
+        }
+        .practice-run-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.35rem;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .practice-entry:hover .practice-run-delete-btn { opacity: 1; }
+        .practice-run-delete-btn:hover { background: rgba(255,107,107,0.2); color: var(--hard); }
+        .practice-empty {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        /* ================================= */
+
+        /* === NOCLIP DEATHS SYSTEM === */
+        .noclip-section {
+            margin-top: 0.75rem;
+            background: rgba(255, 107, 107, 0.04);
+            border: 1px solid rgba(255, 107, 107, 0.25);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .noclip-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 107, 107, 0.08);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+        .noclip-section-header:hover { background: rgba(255, 107, 107, 0.15); }
+        .noclip-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--hard);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .noclip-section-toggle {
+            font-size: 0.8rem;
+            color: var(--hard);
+            transition: transform 0.3s ease;
+        }
+        .noclip-section-toggle.open { transform: rotate(180deg); }
+        .noclip-section-body {
+            padding: 1rem;
+            display: none;
+        }
+        .noclip-section-body.open { display: block; }
+
+        /* Form */
+        .add-noclip-form {
+            display: grid;
+            grid-template-columns: 90px 1fr auto;
+            gap: 0.6rem;
+            align-items: end;
+            margin-bottom: 1rem;
+        }
+        .add-noclip-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .add-noclip-field label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .add-noclip-field input { padding: 0.55rem 0.7rem; font-size: 0.95rem; }
+        .add-noclip-btn {
+            padding: 0.55rem 1rem;
+            background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(200,50,50,0.15));
+            border: 2px solid var(--hard);
+            border-radius: 6px;
+            color: var(--hard);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .add-noclip-btn:hover { background: var(--hard); color: #fff; }
+
+        /* Trend graph */
+        .noclip-trend-wrapper {
+            margin-bottom: 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+        }
+        .noclip-trend-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+        }
+        .noclip-graph {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 64px;
+            position: relative;
+        }
+        .noclip-bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            position: relative;
+        }
+        .noclip-bar {
+            width: 100%;
+            border-radius: 3px 3px 0 0;
+            transition: height 0.4s ease;
+            min-height: 2px;
+            cursor: default;
+            position: relative;
+        }
+        .noclip-bar-val {
+            font-size: 0.62rem;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1;
+        }
+        .noclip-bar-date {
+            font-size: 0.58rem;
+            color: rgba(160,168,184,0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            text-align: center;
+        }
+        .noclip-trend-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255,107,107,0.2);
+        }
+
+        /* List */
+        .noclip-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .noclip-entry {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 6px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+        .noclip-entry:hover {
+            border-color: var(--hard);
+            background: rgba(255,107,107,0.04);
+        }
+        .noclip-rank-1 { background: var(--easy); color: #000; }
+        .noclip-rank-2 { background: rgba(123,237,159,0.5); color: #000; }
+        .noclip-rank-3 { background: rgba(123,237,159,0.25); color: var(--easy); border: 1px solid var(--easy); }
+
+        .noclip-deaths-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            min-width: 72px;
+        }
+        .noclip-deaths-val {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 900;
+            color: var(--hard);
+        }
+        .noclip-deaths-lbl {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        .noclip-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+        }
+        .noclip-date-row {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+        .noclip-date-txt { font-size: 0.78rem; color: var(--text-secondary); }
+        .noclip-note-txt { font-size: 0.82rem; color: var(--text-secondary); font-style: italic; }
+        .noclip-delta {
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 0.12rem 0.45rem;
+            border-radius: 8px;
+        }
+        .noclip-delta-better { background: rgba(123,237,159,0.15); color: var(--easy); border: 1px solid var(--easy); }
+        .noclip-delta-worse  { background: rgba(255,107,107,0.15); color: var(--hard); border: 1px solid var(--hard); }
+        .noclip-pb-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.12rem 0.5rem;
+            background: linear-gradient(135deg, rgba(123,237,159,0.2), rgba(0,200,100,0.1));
+            border: 1px solid var(--easy);
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--easy);
+        }
+        .noclip-stats-row {
+            display: flex;
+            gap: 0.6rem;
+            margin-bottom: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .noclip-stat-chip {
+            padding: 0.28rem 0.65rem;
+            background: rgba(255,107,107,0.07);
+            border: 1px solid rgba(255,107,107,0.25);
+            border-radius: 12px;
+            font-size: 0.78rem;
+            color: var(--hard);
+            font-weight: 600;
+        }
+        .noclip-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.35rem;
+            border-radius: 4px;
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .noclip-entry:hover .noclip-delete-btn { opacity: 1; }
+        .noclip-delete-btn:hover { background: rgba(255,107,107,0.2); color: var(--hard); }
+        .noclip-empty {
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+        /* ============================== */
+
+        /* Daily notes styles */
+        .notes-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .note-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-left: 4px solid var(--accent-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .note-card:hover {
+            border-left-width: 6px;
+            box-shadow: 0 8px 32px rgba(255, 0, 255, 0.2);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .note-date {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-secondary);
+        }
+
+        .note-content {
+            color: var(--text-primary);
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .note-goal {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(0, 217, 255, 0.05);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .note-goal:hover {
+            border-color: var(--accent-primary);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .note-goal.completed {
+            background: rgba(123, 237, 159, 0.1);
+            border-color: var(--easy);
+        }
+
+        .note-goal-checkbox {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .note-goal.completed .note-goal-checkbox {
+            background: var(--easy);
+            border-color: var(--easy);
+            color: black;
+        }
+
+        .note-goal-text {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        .note-goal.completed .note-goal-text {
+            color: var(--easy);
+            text-decoration: line-through;
+        }
+
+        .add-note-form {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-divider {
+            margin: 3rem 0 2rem 0;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-dark);
+            display: block;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.2);
+        }
+
+        .file-upload-area.has-file {
+            border-color: var(--accent-primary);
+            background: rgba(0, 217, 255, 0.05);
+            border-style: solid;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .upload-text {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 1.05rem;
+        }
+
+        .upload-subtext {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .current-media {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .remove-media-btn {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid var(--hard);
+            color: var(--hard);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .remove-media-btn:hover {
+            background: var(--hard);
+            color: white;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 217, 255, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 217, 255, 0.5);
+        }
+
+        .volume-icon {
+            font-size: 1.5rem;
+            color: var(--accent-primary);
+        }
+
+        .music-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .music-control-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .music-control-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .music-control-btn.active {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>🎮 GD PROGRESS TRACKER</h1>
+            <nav class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('checklist')">✅ Checklist</button>
+                <button class="tab-btn" onclick="switchTab('demons')">Demons</button>
+                <button class="tab-btn" onclick="switchTab('notes')">📝 Notes</button>
+                <button class="tab-btn" onclick="switchTab('stats')">Statistics</button>
+                <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="checklist-tab" class="tab-content active">
+            <div id="page-status-bar" style="
+                background: linear-gradient(90deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.1));
+                border: 2px solid var(--hard);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                transition: all 0.3s ease;
+            "></div>
+
+            <div class="checklist-container">
+                <div class="checklist-header">
+                    <h2 style="font-family: 'Orbitron', sans-serif; color: var(--accent-primary);">
+                        ✅ Pre-session Preparation
+                    </h2>
+                    <button class="checklist-edit-btn" id="checklist-edit-btn" onclick="toggleChecklistEditMode()">
+                        ✏️ Customize
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 1.25rem; font-size: 1.05rem;">
+                    Check each item before you start playing to be in the best conditions!
+                </p>
+                <!-- Progress bar -->
+                <div class="checklist-progress-bar-wrapper">
+                    <div class="checklist-progress-bar-fill" id="checklist-progress-fill" style="width:0%"></div>
+                </div>
+                <div id="checklist-items"></div>
+                <!-- Add form (always visible) -->
+                <div class="add-checklist-item">
+                    <input type="text" id="new-checklist-item" placeholder="Add a new task..." onkeydown="if(event.key==='Enter') addChecklistItem()">
+                    <button class="btn" onclick="addChecklistItem()">➕ Add</button>
+                </div>
+                <!-- Reset to defaults (shown only in edit mode) -->
+                <div id="checklist-reset-row" style="display:none; margin-top:0.75rem;">
+                    <button class="checklist-reset-btn" onclick="resetChecklistToDefaults()">🔄 Reset to defaults</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="demons-tab" class="tab-content">
+            <div class="add-demon-form">
+                <h2 style="margin-bottom: 1.5rem; font-family: 'Orbitron', sans-serif;">➕ Add a Demon</h2>
+                <form id="demon-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Demon name *</label>
+                            <input type="text" id="name" required placeholder="Ex: Bloodbath">
+                        </div>
+                        <div class="form-group">
+                            <label for="gddl">Notation GDDL *</label>
+                            <input type="number" id="gddl" min="1" max="39" step="0.1" placeholder="1-39" required>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                1-5: Easy | 6-10: Medium | 11-15: Hard | 16-20: Insane | 21-39: Extreme
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="status">Status *</label>
+                            <select id="status" required>
+                                <option value="">Select...</option>
+                                <option value="Completed">Completed</option>
+                                <option value="In Progress">In Progress</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="levelId">ID du niveau</label>
+                            <input type="text" id="levelId" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="date">Completion date</label>
+                            <input type="date" id="date" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="attempts">Attempts</label>
+                            <input type="number" id="attempts" min="0" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="maxPercent">% maximum atteint</label>
+                            <input type="number" id="maxPercent" min="0" max="100" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="time">Total time (hours)</label>
+                            <input type="number" id="time" min="0" step="0.1" placeholder="Optional">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">Commentaire personnel</label>
+                        <textarea id="comment" rows="2" placeholder="Optional - e.g. First extreme, very intense!"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add demon</button>
+                </form>
+            </div>
+
+            <div class="section-divider">
+                <h2 class="section-title">⏳ Demons in progress</h2>
+            </div>
+
+            <div id="in-progress-list" class="demons-list"></div>
+
+            <div class="section-divider">
+                <h2 class="section-title">🏆 Completed demons</h2>
+            </div>
+
+            <div class="filters">
+                <span class="filter-label">Filtrer:</span>
+                <select id="filter-difficulty" onchange="filterDemons()">
+                    <option value="">All difficulties</option>
+                    <option value="Easy Demon">Easy Demon</option>
+                    <option value="Medium Demon">Medium Demon</option>
+                    <option value="Hard Demon">Hard Demon</option>
+                    <option value="Insane Demon">Insane Demon</option>
+                    <option value="Extreme Demon">Extreme Demon</option>
+                </select>
+                <select id="sort-by" onchange="sortDemons()">
+                    <option value="date-desc">Date (newest → oldest)</option>
+                    <option value="date-asc">Date (oldest → newest)</option>
+                    <option value="name-asc">Name (A → Z)</option>
+                    <option value="name-desc">Name (Z → A)</option>
+                    <option value="gddl-desc">GDDL (hardest → easiest)</option>
+                    <option value="gddl-asc">GDDL (easiest → hardest)</option>
+                    <option value="attempts-desc">Attempts (most → least)</option>
+                    <option value="time-desc">Time (most → least)</option>
+                </select>
+            </div>
+
+            <div id="finished-list" class="demons-list"></div>
+        </div>
+
+        <div id="notes-tab" class="tab-content">
+            <div class="chart-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(255, 0, 255, 0.1)); border: 2px solid var(--accent-primary);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--accent-primary);">
+                            🔥 Login Streak
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem;">Keep logging in every day to maintain your streak!</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div id="streak-count" style="font-family: 'Orbitron', sans-serif; font-size: 4rem; font-weight: 900; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+                        <div style="color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">jours</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="add-note-form">
+                <h2 style="margin-bottom: 1.5rem; font-family: 'Orbitron', sans-serif;">📝 Nouvelle note</h2>
+                <form id="note-form">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="note-date">Date</label>
+                        <input type="date" id="note-date" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="note-goal">🎯 Session goal</label>
+                        <input type="text" id="note-goal" placeholder="Ex: Atteindre 80% sur Bloodbath" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="note-content">📋 Session details</label>
+                        <textarea id="note-content" rows="4" required placeholder="e.g. Today I did 500 attempts on Bloodbath..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">➕ Add note</button>
+                </form>
+            </div>
+
+            <h2 style="margin: 2rem 0 1.5rem 0; font-family: 'Orbitron', sans-serif; font-size: 2rem;">📖 Historique des notes</h2>
+            <div id="notes-list" class="notes-container"></div>
+        </div>
+
+        <div id="stats-tab" class="tab-content">
+            <h2 style="margin-bottom: 2rem; font-family: 'Orbitron', sans-serif; font-size: 2rem;">📊 Statistiques</h2>
+            
+            <h3 style="margin-bottom: 1rem; color: var(--accent-primary);">🔢 Main counters</h3>
+            <div class="stats-grid" id="main-stats"></div>
+
+            <h3 style="margin: 2rem 0 1rem; color: var(--accent-primary);">🏆 Personal records</h3>
+            <div class="stats-grid" id="records-stats"></div>
+
+            <h3 style="margin: 2rem 0 1rem; color: var(--accent-primary);">⏱️ Time & Effort</h3>
+            <div class="stats-grid" id="time-stats"></div>
+
+            <h3 style="margin: 2rem 0 1rem; color: var(--accent-primary);">📈 Charts</h3>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3 class="chart-title">Distribution by difficulty</h3>
+                    <div id="difficulty-chart-stats"></div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">Progression</h3>
+                    <div id="progress-chart-stats"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="charts-tab" class="tab-content">
+            <h2 style="margin-bottom: 2rem; font-family: 'Orbitron', sans-serif; font-size: 2rem;">📈 Charts</h2>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3 class="chart-title">Distribution by difficulty</h3>
+                    <div id="difficulty-chart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3 class="chart-title">Progression</h3>
+                    <div id="progress-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tab" class="tab-content">
+            <h2 style="margin-bottom: 2rem; font-family: 'Orbitron', sans-serif; font-size: 2rem;">⚙️ Settings</h2>
+            
+            <div style="max-width: 800px;">
+                <div class="chart-card" style="margin-bottom: 2rem;">
+                    <h3 class="chart-title">🖼️ Background image</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Customize your tracker background with an image of your choice.
+                    </p>
+                    <label for="background-upload" class="file-upload-area" id="bg-upload-area">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Cliquer pour choisir une image</div>
+                        <div class="upload-subtext">Accepted formats: JPG, PNG, GIF</div>
+                    </label>
+                    <input type="file" id="background-upload" accept="image/*" onchange="handleBackgroundUpload(event)">
+                    <div id="current-bg" class="current-media" style="display: none;">
+                        <div style="font-weight: 600; color: var(--easy);">✅ Background image active</div>
+                        <button class="remove-media-btn" onclick="removeBackground()">🗑️ Remove background image</button>
+                    </div>
+                </div>
+
+                <div class="chart-card" style="margin-bottom: 2rem;">
+                    <h3 class="chart-title">🎵 Background music</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Add background music to your tracker.
+                    </p>
+                    <label for="music-upload" class="file-upload-area" id="music-upload-area">
+                        <div class="upload-icon">🎵</div>
+                        <div class="upload-text">Cliquer pour choisir une musique</div>
+                        <div class="upload-subtext">Accepted formats: MP3, WAV, OGG</div>
+                    </label>
+                    <input type="file" id="music-upload" accept="audio/*" onchange="handleMusicUpload(event)">
+                    <div id="current-music" class="current-media" style="display: none;">
+                        <div id="music-name" style="font-weight: 600; color: var(--easy); margin-bottom: 1rem;">✅ Music loaded</div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Volume</label>
+                            <div class="volume-control">
+                                <span class="volume-icon">🔊</span>
+                                <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
+                                <span id="volume-value" style="color: var(--accent-primary); font-weight: 700; min-width: 50px; text-align: right;">50%</span>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Controls</label>
+                            <div class="music-controls">
+                                <button class="music-control-btn" id="play-btn" onclick="togglePlayPause()">▶️ Play</button>
+                                <button class="music-control-btn" id="loop-btn" onclick="toggleLoop()">🔁 Loop</button>
+                            </div>
+                        </div>
+                        <button class="remove-media-btn" onclick="removeMusic()">🗑️ Remove music</button>
+                    </div>
+                </div>
+
+                <div class="chart-card" style="margin-bottom: 2rem;">
+                    <h3 class="chart-title">💾 Data management</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Export or reset your data.</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <button class="btn" style="background: rgba(0, 217, 255, 0.2); box-shadow: none;" onclick="exportData()">📥 Export data</button>
+                        <button class="btn" style="background: rgba(255, 107, 107, 0.2); box-shadow: none; color: var(--hard);" onclick="resetData()">🗑️ Reset all</button>
+                    </div>
+                </div>
+
+                <div style="padding: 1.5rem; background: rgba(0, 217, 255, 0.05); border: 2px solid var(--border); border-radius: 12px; font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+                    <div style="color: var(--accent-primary); font-weight: 700; margin-bottom: 0.75rem; font-size: 1rem;">💡 Informations importantes</div>
+                    <ul style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li>All settings are <strong>automatically saved</strong> in your browser</li>
+                        <li>Your data <strong>persists between sessions</strong> — nothing is lost when you close the page</li>
+                        <li>The background image and music are stored locally in your browser</li>
+                        <li>No data is sent to the internet — everything stays private</li>
+                        <li>For optimal performance, use reasonably sized files (&lt; 10 MB)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="background-music" loop></audio>
+
+    <script>
+        let demons = [];
+        let checklistItems = [];
+        let dailyNotes = [];
+        let streakData = { currentStreak: 0, lastVisit: null };
+
+        function gddlToDifficulty(gddl) {
+            if (gddl >= 1 && gddl <= 5) return 'Easy Demon';
+            if (gddl >= 6 && gddl <= 10) return 'Medium Demon';
+            if (gddl >= 11 && gddl <= 15) return 'Hard Demon';
+            if (gddl >= 16 && gddl <= 20) return 'Insane Demon';
+            if (gddl >= 21 && gddl <= 39) return 'Extreme Demon';
+            return 'Unknown';
+        }
+
+        function getDifficultyFromGDDL(gddl) {
+            if (gddl >= 1 && gddl < 5.5) return 'Easy Demon';
+            if (gddl >= 5.5 && gddl < 10.5) return 'Medium Demon';
+            if (gddl >= 10.5 && gddl < 15.5) return 'Hard Demon';
+            if (gddl >= 15.5 && gddl < 20.5) return 'Insane Demon';
+            if (gddl >= 20.5 && gddl <= 39) return 'Extreme Demon';
+            return 'Unknown';
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('gd-demons');
+                if (saved) demons = JSON.parse(saved);
+
+                const savedChecklist = localStorage.getItem('gd-checklist');
+                if (savedChecklist) {
+                    checklistItems = JSON.parse(savedChecklist);
+                } else {
+                    checklistItems = [
+                        { id: 1, text: "Check that my mouse/keyboard works properly", checked: false },
+                        { id: 2, text: "Warm up with easy levels (5-10 min)", checked: false },
+                        { id: 3, text: "Have a water bottle nearby", checked: false },
+                        { id: 4, text: "Ajuster le volume de la musique", checked: false },
+                        { id: 5, text: "Check my posture and comfort", checked: false },
+                        { id: 6, text: "Set a goal for the session", checked: false }
+                    ];
+                }
+
+                const savedNotes = localStorage.getItem('gd-notes');
+                if (savedNotes) dailyNotes = JSON.parse(savedNotes);
+
+                const savedStreak = localStorage.getItem('gd-streak');
+                if (savedStreak) streakData = JSON.parse(savedStreak);
+
+                updateStreak();
+                renderDemons();
+                renderChecklist();
+                renderNotes();
+                updateStats();
+                updateCharts();
+                setTimeout(updatePageStatus, 100);
+            } catch (error) {
+                console.log('No saved data found');
+            }
+            loadSettings();
+        }
+
+        function updateStreak() {
+            const today = new Date().toISOString().split('T')[0];
+            if (!streakData.lastVisit) {
+                streakData.currentStreak = 1;
+                streakData.lastVisit = today;
+            } else if (streakData.lastVisit !== today) {
+                const lastDate = new Date(streakData.lastVisit);
+                const todayDate = new Date(today);
+                const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) {
+                    streakData.currentStreak++;
+                } else if (diffDays > 1) {
+                    streakData.currentStreak = 1;
+                }
+                streakData.lastVisit = today;
+            }
+            document.getElementById('streak-count').textContent = streakData.currentStreak;
+            try { localStorage.setItem('gd-streak', JSON.stringify(streakData)); } catch(e) {}
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('gd-demons', JSON.stringify(demons));
+                localStorage.setItem('gd-checklist', JSON.stringify(checklistItems));
+                localStorage.setItem('gd-notes', JSON.stringify(dailyNotes));
+                localStorage.setItem('gd-streak', JSON.stringify(streakData));
+            } catch (error) {
+                console.error('Erreur de sauvegarde:', error);
+            }
+        }
+
+        // ── CHECKLIST EDIT MODE ──────────────────────────────────────────────────
+        let checklistEditMode = false;
+        let dragSrcId = null;
+
+        function toggleChecklistEditMode() {
+            checklistEditMode = !checklistEditMode;
+            const btn = document.getElementById('checklist-edit-btn');
+            const resetRow = document.getElementById('checklist-reset-row');
+            if (checklistEditMode) {
+                btn.textContent = '✅ Done';
+                btn.classList.add('active');
+                resetRow.style.display = 'block';
+            } else {
+                btn.innerHTML = '✏️ Customize';
+                btn.classList.remove('active');
+                resetRow.style.display = 'none';
+                // Save any inline edits that are still focused
+                document.querySelectorAll('.checklist-text-input').forEach(inp => {
+                    const id = parseInt(inp.dataset.id);
+                    const item = checklistItems.find(i => i.id === id);
+                    if (item && inp.value.trim()) item.text = inp.value.trim();
+                });
+                saveData();
+            }
+            renderChecklist();
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklist-items');
+            const editMode = checklistEditMode;
+
+            container.innerHTML = checklistItems.map(item => `
+                <div class="checklist-item ${item.checked ? 'checked' : ''} ${editMode ? 'edit-mode' : ''}"
+                     id="cl-item-${item.id}"
+                     draggable="${editMode}"
+                     onclick="${editMode ? '' : `toggleChecklistItem(${item.id})`}"
+                     ondragstart="${editMode ? `clDragStart(event, ${item.id})` : ''}"
+                     ondragover="${editMode ? `clDragOver(event)` : ''}"
+                     ondrop="${editMode ? `clDrop(event, ${item.id})` : ''}"
+                     ondragend="${editMode ? 'clDragEnd(event)' : ''}">
+                    ${editMode ? `<div class="checklist-drag-handle" title="Drag to reorder">⠿</div>` : ''}
+                    <div class="checklist-checkbox" onclick="${editMode ? 'event.stopPropagation()' : ''}">${item.checked ? '✓' : ''}</div>
+                    ${editMode
+                        ? `<input class="checklist-text-input" data-id="${item.id}" value="${item.text.replace(/"/g, '&quot;')}"
+                               style="display:flex"
+                               onclick="event.stopPropagation()"
+                               onchange="clUpdateText(${item.id}, this.value)"
+                               onblur="clUpdateText(${item.id}, this.value)">`
+                        : `<div class="checklist-text">${item.text}</div>`
+                    }
+                    ${editMode
+                        ? `<button class="checklist-delete-btn" onclick="event.stopPropagation(); deleteChecklistItem(${item.id})" title="Delete">🗑️</button>`
+                        : ''
+                    }
+                </div>
+            `).join('');
+
+            // Update progress bar
+            const checked = checklistItems.filter(i => i.checked).length;
+            const total   = checklistItems.length;
+            const pct     = total > 0 ? Math.round((checked / total) * 100) : 0;
+            const fill    = document.getElementById('checklist-progress-fill');
+            if (fill) fill.style.width = pct + '%';
+
+            updatePageStatus();
+        }
+
+        function clUpdateText(id, val) {
+            const item = checklistItems.find(i => i.id === id);
+            if (item && val.trim()) {
+                item.text = val.trim();
+                saveData();
+            }
+        }
+
+        function deleteChecklistItem(id) {
+            checklistItems = checklistItems.filter(i => i.id !== id);
+            saveData();
+            renderChecklist();
+            updatePageStatus();
+        }
+
+        function resetChecklistToDefaults() {
+            if (!confirm('Reset checklist to default items? Your current items will be deleted.')) return;
+            checklistItems = [
+                { id: 1, text: "Check that my mouse/keyboard works properly", checked: false },
+                { id: 2, text: "Warm up with easy levels (5-10 min)", checked: false },
+                { id: 3, text: "Have a water bottle nearby", checked: false },
+                { id: 4, text: "Phone on silent", checked: false },
+                { id: 5, text: "Check my posture and comfort", checked: false },
+                { id: 6, text: "Set a goal for the session", checked: false }
+            ];
+            saveData();
+            renderChecklist();
+            updatePageStatus();
+        }
+
+        // ── Drag & drop reorder ──────────────────────────────────────────────
+        function clDragStart(event, id) {
+            dragSrcId = id;
+            event.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => {
+                const el = document.getElementById(`cl-item-${id}`);
+                if (el) el.classList.add('dragging');
+            }, 0);
+        }
+
+        function clDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            const target = event.currentTarget;
+            document.querySelectorAll('.checklist-item').forEach(el => el.classList.remove('drag-over'));
+            target.classList.add('drag-over');
+        }
+
+        function clDrop(event, targetId) {
+            event.preventDefault();
+            if (dragSrcId === null || dragSrcId === targetId) return;
+            const srcIdx = checklistItems.findIndex(i => i.id === dragSrcId);
+            const tgtIdx = checklistItems.findIndex(i => i.id === targetId);
+            if (srcIdx === -1 || tgtIdx === -1) return;
+            const [moved] = checklistItems.splice(srcIdx, 1);
+            checklistItems.splice(tgtIdx, 0, moved);
+            saveData();
+            renderChecklist();
+        }
+
+        function clDragEnd(event) {
+            dragSrcId = null;
+            document.querySelectorAll('.checklist-item').forEach(el => {
+                el.classList.remove('dragging', 'drag-over');
+            });
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        function addChecklistItem() {
+            const input = document.getElementById('new-checklist-item');
+            const text = input.value.trim();
+            if (text) {
+                const newId = checklistItems.length > 0 ? Math.max(...checklistItems.map(i => i.id)) + 1 : 1;
+                checklistItems.push({ id: newId, text: text, checked: false });
+                input.value = '';
+                saveData();
+                renderChecklist();
+                updatePageStatus();
+                showNotification('✅ Task added!');
+            }
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notes-list');
+            if (dailyNotes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <h3>No notes yet pour le moment</h3>
+                        <p>Start documenting your gaming sessions!</p>
+                    </div>
+                `;
+                return;
+            }
+            const sortedNotes = [...dailyNotes].sort((a, b) => new Date(b.date) - new Date(a.date));
+            container.innerHTML = sortedNotes.map(note => `
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-date">${new Date(note.date).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <button class="btn btn-small btn-delete" onclick="deleteNote(${note.id})">🗑️</button>
+                    </div>
+                    ${note.goal ? `
+                        <div class="note-goal ${note.goalCompleted ? 'completed' : ''}" onclick="toggleGoalComplete(${note.id})">
+                            <div class="note-goal-checkbox">${note.goalCompleted ? '✓' : ''}</div>
+                            <div class="note-goal-text">🎯 ${note.goal}</div>
+                        </div>
+                    ` : ''}
+                    <div class="note-content">${note.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleGoalComplete(noteId) {
+            const note = dailyNotes.find(n => n.id === noteId);
+            if (note) {
+                note.goalCompleted = !note.goalCompleted;
+                saveData();
+                renderNotes();
+                if (note.goalCompleted) showNotification('🎉 Goal achieved! Well done!');
+            }
+        }
+
+        document.getElementById('note-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newId = dailyNotes.length > 0 ? Math.max(...dailyNotes.map(n => n.id)) + 1 : 1;
+            dailyNotes.push({
+                id: newId,
+                date: document.getElementById('note-date').value,
+                goal: document.getElementById('note-goal').value,
+                goalCompleted: false,
+                content: document.getElementById('note-content').value
+            });
+            saveData();
+            renderNotes();
+            updatePageStatus();
+            e.target.reset();
+            document.getElementById('note-date').value = new Date().toISOString().split('T')[0];
+            showNotification('✅ Note added successfully!');
+        });
+
+        function deleteNote(id) {
+            if (confirm('Delete cette note ?')) {
+                dailyNotes = dailyNotes.filter(n => n.id !== id);
+                saveData();
+                renderNotes();
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const bgData = localStorage.getItem('gd-background');
+                if (bgData) {
+                    const style = document.createElement('style');
+                    style.textContent = `body::before { background-image: url(${bgData}) !important; }`;
+                    document.head.appendChild(style);
+                    document.body.classList.add('has-background');
+                    document.getElementById('current-bg').style.display = 'block';
+                    document.getElementById('bg-upload-area').classList.add('has-file');
+                }
+                const musicData = localStorage.getItem('gd-music');
+                if (musicData) {
+                    document.getElementById('background-music').src = musicData;
+                    document.getElementById('current-music').style.display = 'block';
+                    document.getElementById('music-upload-area').classList.add('has-file');
+                }
+                const volume = localStorage.getItem('gd-volume');
+                if (volume) { document.getElementById('volume-slider').value = volume; updateVolume(volume); }
+                if (localStorage.getItem('gd-music-playing') === 'true') {
+                    document.getElementById('background-music').play().catch(e => {});
+                    document.getElementById('play-btn').classList.add('active');
+                    document.getElementById('play-btn').innerHTML = '⏸️ Pause';
+                }
+                const audio = document.getElementById('background-music');
+                audio.loop = localStorage.getItem('gd-music-loop') === 'true';
+                if (audio.loop) document.getElementById('loop-btn').classList.add('active');
+                const musicName = localStorage.getItem('gd-music-name');
+                if (musicName) document.getElementById('music-name').innerHTML = `🎵 ${musicName}`;
+            } catch (e) {}
+        }
+
+        function handleBackgroundUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const style = document.createElement('style');
+                    style.textContent = `body::before { background-image: url(${e.target.result}) !important; }`;
+                    document.head.appendChild(style);
+                    document.body.classList.add('has-background');
+                    document.getElementById('current-bg').style.display = 'block';
+                    document.getElementById('bg-upload-area').classList.add('has-file');
+                    try { localStorage.setItem('gd-background', e.target.result); } catch(err) {}
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeBackground() {
+            document.querySelectorAll('style').forEach(s => { if (s.textContent.includes('body::before')) s.remove(); });
+            document.body.classList.remove('has-background');
+            document.getElementById('current-bg').style.display = 'none';
+            document.getElementById('bg-upload-area').classList.remove('has-file');
+            document.getElementById('background-upload').value = '';
+            try { localStorage.removeItem('gd-background'); } catch(e) {}
+        }
+
+        function handleMusicUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('background-music').src = e.target.result;
+                    document.getElementById('current-music').style.display = 'block';
+                    document.getElementById('music-upload-area').classList.add('has-file');
+                    document.getElementById('music-name').innerHTML = `🎵 ${file.name}`;
+                    try { localStorage.setItem('gd-music', e.target.result); localStorage.setItem('gd-music-name', file.name); } catch(err) {}
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeMusic() {
+            const audio = document.getElementById('background-music');
+            audio.pause(); audio.src = '';
+            document.getElementById('current-music').style.display = 'none';
+            document.getElementById('music-upload-area').classList.remove('has-file');
+            document.getElementById('music-upload').value = '';
+            document.getElementById('play-btn').classList.remove('active');
+            document.getElementById('play-btn').innerHTML = '▶️ Play';
+            try { localStorage.removeItem('gd-music'); localStorage.removeItem('gd-music-name'); localStorage.removeItem('gd-music-playing'); } catch(e) {}
+        }
+
+        function togglePlayPause() {
+            const audio = document.getElementById('background-music');
+            const btn = document.getElementById('play-btn');
+            if (audio.paused) {
+                audio.play();
+                btn.classList.add('active');
+                btn.innerHTML = '⏸️ Pause';
+                try { localStorage.setItem('gd-music-playing', 'true'); } catch(e) {}
+            } else {
+                audio.pause();
+                btn.classList.remove('active');
+                btn.innerHTML = '▶️ Play';
+                try { localStorage.setItem('gd-music-playing', 'false'); } catch(e) {}
+            }
+        }
+
+        function toggleLoop() {
+            const audio = document.getElementById('background-music');
+            audio.loop = !audio.loop;
+            document.getElementById('loop-btn').classList.toggle('active');
+            try { localStorage.setItem('gd-music-loop', audio.loop.toString()); } catch(e) {}
+        }
+
+        function updateVolume(value) {
+            document.getElementById('background-music').volume = value / 100;
+            document.getElementById('volume-value').textContent = value + '%';
+            try { localStorage.setItem('gd-volume', value.toString()); } catch(e) {}
+        }
+
+        function exportData() {
+            const data = { demons, checklist: checklistItems, notes: dailyNotes, streak: streakData, exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gd-demons-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('✅ Data exported successfully!');
+        }
+
+        function resetData() {
+            if (confirm('⚠️ Are you sure you want to RESET EVERYTHING ?\n\nThis will delete:\n- All your demons\n- Your checklist\n- All your notes\n- Your streak\n- The background image\n- The music\n- All settings\n\nThis action is IRREVERSIBLE !')) {
+                if (confirm('Final confirmation: do you really want to delete everything?')) {
+                    try {
+                        localStorage.clear();
+                        demons = []; checklistItems = []; dailyNotes = [];
+                        streakData = { currentStreak: 0, lastVisit: null };
+                        removeBackground(); removeMusic();
+                        showNotification('✅ All data has been reset!');
+                        setTimeout(() => location.reload(), 1500);
+                    } catch(e) { alert('❌ Error during reset'); }
+                }
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            if (tabName === 'stats') updateStats();
+            if (tabName === 'notes') { updateStreak(); renderNotes(); }
+        }
+
+        document.getElementById('demon-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const gddl = parseFloat(document.getElementById('gddl').value);
+            const demon = {
+                id: Date.now(),
+                name: document.getElementById('name').value,
+                gddl: gddl,
+                difficulty: gddlToDifficulty(gddl),
+                levelId: document.getElementById('levelId').value || '',
+                status: document.getElementById('status').value,
+                date: document.getElementById('date').value || null,
+                attempts: parseInt(document.getElementById('attempts').value) || 0,
+                maxPercent: parseInt(document.getElementById('maxPercent').value) || 0,
+                time: parseFloat(document.getElementById('time').value) || 0,
+                comment: document.getElementById('comment').value || '',
+                percentHistory: [],
+                attemptsHistory: []
+            };
+            demons.push(demon);
+            saveData();
+            renderDemons();
+            updateStats();
+            updateCharts();
+            e.target.reset();
+            showNotification(`✅ ${demon.name} added successfully!`);
+        });
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 100px; right: 20px;
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                color: white; padding: 1rem 2rem; border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 217, 255, 0.5);
+                z-index: 9999; font-weight: 600; animation: slideIn 0.3s ease;
+                font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+
+        function deleteDemon(id) {
+            if (confirm('Delete this demon?')) {
+                demons = demons.filter(d => d.id !== id);
+                saveData(); renderDemons(); updateStats(); updateCharts();
+            }
+        }
+
+        function markAsComplete(id) {
+            const demon = demons.find(d => d.id === id);
+            if (demon) {
+                demon.status = 'Completed';
+                if (!demon.date) demon.date = new Date().toISOString().split('T')[0];
+                saveData(); renderDemons(); updateStats(); updateCharts();
+                showNotification(`🎉 ${demon.name} completed! Congratulations!`);
+            }
+        }
+
+        // ===================================================================
+        // NOUVELLE FONCTION : mise à jour du pourcentage ET des attempts
+        // ===================================================================
+        function updateProgress(id) {
+            const demon = demons.find(d => d.id === id);
+            if (!demon) return;
+
+            const percentInput = document.getElementById(`percent-input-${id}`);
+            const attemptsInput = document.getElementById(`attempts-input-${id}`);
+
+            const newPercent = parseInt(percentInput.value) || 0;
+            const addedAttempts = parseInt(attemptsInput.value) || 0;
+
+            // --- Gestion du pourcentage ---
+            if (!demon.percentHistory) demon.percentHistory = [];
+            if (newPercent > 0 && (demon.percentHistory.length === 0 || demon.percentHistory[demon.percentHistory.length - 1] !== newPercent)) {
+                demon.percentHistory.push(newPercent);
+            }
+            demon.maxPercent = newPercent;
+
+            // --- Gestion des attempts ---
+            if (!demon.attemptsHistory) demon.attemptsHistory = [];
+            if (addedAttempts > 0) {
+                demon.attempts = (demon.attempts || 0) + addedAttempts;
+                // Enregistrer l'entrée dans l'historique avec la date et le % du moment
+                demon.attemptsHistory.push({
+                    date: new Date().toISOString().split('T')[0],
+                    added: addedAttempts,
+                    total: demon.attempts,
+                    percent: newPercent
+                });
+                // Reset le champ après ajout
+                attemptsInput.value = '';
+            }
+
+            // Auto-complétion à 100%
+            if (demon.maxPercent >= 100) {
+                demon.status = 'Completed';
+                if (!demon.date) demon.date = new Date().toISOString().split('T')[0];
+                showNotification(`🎉 ${demon.name} automatically marked as completed! GG!`);
+            }
+
+            saveData(); renderDemons(); updateStats(); updateCharts();
+        }
+        // ===================================================================
+
+        function filterDemons() { renderDemons(); }
+        function sortDemons() { renderDemons(); }
+
+        // ===================================================================
+        // RUNS SYSTEM
+        // ===================================================================
+        function toggleRunsSection(demonId) {
+            const body = document.getElementById(`runs-body-${demonId}`);
+            const toggle = document.getElementById(`runs-toggle-${demonId}`);
+            body.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        // ===================================================================
+        // PRACTICE FULL-RUN SYSTEM (finir le level en mini-attempts)
+        // ===================================================================
+        function togglePracticeSection(demonId) {
+            const body   = document.getElementById(`practice-body-${demonId}`);
+            const toggle = document.getElementById(`practice-toggle-${demonId}`);
+            body.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        function addPracticeRun(demonId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon) return;
+
+            const attInput  = document.getElementById(`practice-att-${demonId}`);
+            const noteInput = document.getElementById(`practice-note-${demonId}`);
+
+            const att  = parseInt(attInput.value);
+            const note = noteInput.value.trim();
+
+            if (isNaN(att) || att <= 0) {
+                showNotification('⚠️ Saisis un nombre d\'attempts valide (≥ 1).');
+                return;
+            }
+
+            if (!demon.practiceRuns)    demon.practiceRuns    = [];
+            if (!demon.attemptsHistory) demon.attemptsHistory = [];
+
+            const today = new Date().toISOString().split('T')[0];
+
+            // --- Ajouter au compteur global d'attempts ---
+            demon.attempts = (demon.attempts || 0) + att;
+
+            // --- Enregistrer dans l'historique des sessions ---
+            demon.attemptsHistory.push({
+                date:    today,
+                added:   att,
+                total:   demon.attempts,
+                percent: demon.maxPercent || 0,
+                source:  'practice'
+            });
+
+            // --- Enregistrer le practice run ---
+            demon.practiceRuns.push({
+                id:       Date.now(),
+                attempts: att,
+                note:     note,
+                date:     today
+            });
+
+            attInput.value  = '';
+            noteInput.value = '';
+
+            // Notif PB ou run normal
+            const sorted = [...demon.practiceRuns].sort((a, b) => a.attempts - b.attempts);
+            const isPB   = sorted[0].id === demon.practiceRuns[demon.practiceRuns.length - 1].id;
+            if (isPB) {
+                showNotification(`🏆 New PB! ${att} attempts — total: ${demon.attempts.toLocaleString()}`);
+            } else {
+                showNotification(`✅ Run recorded: ${att} attempts — total: ${demon.attempts.toLocaleString()}`);
+            }
+
+            saveData();
+            renderDemons();
+            updateStats();
+        }
+
+        function deletePracticeRun(demonId, runId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon || !demon.practiceRuns) return;
+            demon.practiceRuns = demon.practiceRuns.filter(r => r.id !== runId);
+            saveData();
+            renderDemons();
+        }
+
+        function buildPracticeHtml(demon) {
+            const runs = demon.practiceRuns || [];
+
+            // Trier du fewest attempts (best) au plus
+            const sorted = [...runs].sort((a, b) => a.attempts - b.attempts);
+
+            // Stats rapides
+            let statsRow = '';
+            if (sorted.length > 0) {
+                const pb  = sorted[0].attempts;
+                const avg = Math.round(sorted.reduce((s, r) => s + r.attempts, 0) / sorted.length);
+                const worst = sorted[sorted.length - 1].attempts;
+                statsRow = `
+                    <div class="practice-stats-row">
+                        <span class="practice-stat-chip">👑 PB: ${pb} attempts</span>
+                        <span class="practice-stat-chip">📊 Average: ${avg} attempts</span>
+                        <span class="practice-stat-chip">📉 Worst: ${worst} attempts</span>
+                        <span class="practice-stat-chip">🔢 ${sorted.length} run${sorted.length > 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            }
+
+            const listHtml = sorted.length === 0
+                ? `<div class="practice-empty">No runs recorded — log your first attempt!</div>`
+                : `<div class="practice-list">
+                    ${sorted.map((run, idx) => {
+                        const rank = idx + 1;
+                        let rankClass = 'run-rank-other';
+                        let rankLabel = `#${rank}`;
+                        if (rank === 1) { rankClass = 'practice-rank-1 run-rank'; rankLabel = '👑'; }
+                        else if (rank === 2) { rankClass = 'practice-rank-2 run-rank'; rankLabel = '🥈'; }
+                        else if (rank === 3) { rankClass = 'practice-rank-3 run-rank'; rankLabel = '🥉'; }
+                        else { rankClass = 'run-rank run-rank-other'; }
+
+                        // Delta vs entrée précédente dans le classement (triée)
+                        let deltaHtml = '';
+                        if (idx > 0) {
+                            const diff = run.attempts - sorted[idx - 1].attempts;
+                            if (diff > 0)       deltaHtml = `<span class="practice-delta practice-delta-worse">+${diff}</span>`;
+                            else if (diff === 0) deltaHtml = `<span class="practice-delta practice-delta-same">=</span>`;
+                        }
+
+                        // Couronne PB uniquement sur le #1
+                        const crownHtml = rank === 1
+                            ? `<span class="practice-pb-crown">⭐ PB</span>`
+                            : '';
+
+                        return `
+                            <div class="practice-entry">
+                                <div class="run-rank ${rankClass.includes('run-rank') ? '' : 'run-rank'} ${rankClass}">${rankLabel}</div>
+                                <div class="practice-info">
+                                    <div class="practice-date-row">
+                                        <span class="practice-date-txt">${run.date}</span>
+                                        ${crownHtml}
+                                        ${deltaHtml}
+                                    </div>
+                                    ${run.note ? `<span class="practice-note-txt">"${run.note}"</span>` : ''}
+                                </div>
+                                <div class="practice-attempts-col">
+                                    <span class="practice-attempts-val">${run.attempts.toLocaleString()}</span>
+                                    <span class="practice-attempts-lbl">attempts</span>
+                                </div>
+                                <button class="practice-run-delete-btn" onclick="deletePracticeRun(${demon.id}, ${run.id})" title="Delete">✕</button>
+                            </div>
+                        `;
+                    }).join('')}
+                  </div>`;
+
+            return `
+                <div class="practice-section">
+                    <div class="practice-section-header" onclick="togglePracticeSection(${demon.id})">
+                        <div class="practice-section-title">
+                            👑 Full runs (practice)
+                            ${sorted.length > 0 ? `<span style="background:rgba(218,112,214,0.2);border:1px solid var(--insane);border-radius:10px;padding:0.1rem 0.5rem;font-size:0.75rem;">${sorted.length}</span>` : ''}
+                            ${sorted.length > 0 ? `<span style="background:rgba(218,112,214,0.15);border:1px solid var(--insane);border-radius:10px;padding:0.1rem 0.6rem;font-size:0.75rem;color:var(--insane);">PB: ${sorted[0].attempts}</span>` : ''}
+                        </div>
+                        <span class="practice-section-toggle" id="practice-toggle-${demon.id}">▼</span>
+                    </div>
+                    <div class="practice-section-body" id="practice-body-${demon.id}">
+                        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">
+                            🎯 Record each time you finish the level in practice mode (0→100%) with the number of attempts used. Ranking goes from <strong style="color:var(--insane)">fewest attempts (best)</strong> to most.
+                        </p>
+                        <div class="add-practice-form">
+                            <div class="add-practice-field">
+                                <label>Attempts</label>
+                                <input type="number" id="practice-att-${demon.id}" min="1" placeholder="e.g. 45">
+                            </div>
+                            <div class="add-practice-field">
+                                <label>Note (optional)</label>
+                                <input type="text" id="practice-note-${demon.id}" placeholder="e.g. good flow, missed a jump...">
+                            </div>
+                            <button class="add-practice-btn" onclick="addPracticeRun(${demon.id})">➕ Add</button>
+                        </div>
+                        ${statsRow}
+                        ${listHtml}
+                    </div>
+                </div>
+            `;
+        }
+        // ===================================================================
+
+        // ===================================================================
+        // NOCLIP DEATHS SYSTEM
+        // ===================================================================
+        function toggleNoclipSection(demonId) {
+            const body   = document.getElementById(`noclip-body-${demonId}`);
+            const toggle = document.getElementById(`noclip-toggle-${demonId}`);
+            body.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        function addNoclipRun(demonId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon) return;
+
+            const deathInput = document.getElementById(`noclip-deaths-${demonId}`);
+            const noteInput  = document.getElementById(`noclip-note-${demonId}`);
+
+            const deaths = parseInt(deathInput.value);
+            const note   = noteInput.value.trim();
+
+            if (isNaN(deaths) || deaths < 0) {
+                showNotification('⚠️ Saisis un nombre de deaths valide (≥ 0).');
+                return;
+            }
+
+            if (!demon.noclipRuns) demon.noclipRuns = [];
+
+            const today = new Date().toISOString().split('T')[0];
+            demon.noclipRuns.push({ id: Date.now(), deaths, note, date: today });
+
+            deathInput.value = '';
+            noteInput.value  = '';
+
+            // Detect PB (fewer deaths = better)
+            const sorted = [...demon.noclipRuns].sort((a, b) => a.deaths - b.deaths);
+            const latest = demon.noclipRuns[demon.noclipRuns.length - 1];
+            const isPB   = sorted[0].id === latest.id;
+
+            if (isPB) {
+                showNotification(`💀 New noclip PB! ${deaths} deaths — record broken!`);
+            } else {
+                // Show improvement vs previous run
+                const prev = demon.noclipRuns.length >= 2
+                    ? demon.noclipRuns[demon.noclipRuns.length - 2]
+                    : null;
+                if (prev) {
+                    const diff = deaths - prev.deaths;
+                    const arrow = diff < 0 ? `▲ ${Math.abs(diff)} better` : diff > 0 ? `▼ ${diff} more` : 'same result';
+                    showNotification(`💀 Noclip run: ${deaths} deaths (${arrow})`);
+                } else {
+                    showNotification(`💀 Noclip run recorded: ${deaths} deaths`);
+                }
+            }
+
+            saveData();
+            renderDemons();
+            updateStats();
+        }
+
+        function deleteNoclipRun(demonId, runId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon || !demon.noclipRuns) return;
+            demon.noclipRuns = demon.noclipRuns.filter(r => r.id !== runId);
+            saveData();
+            renderDemons();
+        }
+
+        function buildNoclipHtml(demon) {
+            const runs = demon.noclipRuns || [];
+
+            // Sort: fewest deaths = best = rank #1
+            const sorted = [...runs].sort((a, b) => a.deaths - b.deaths);
+
+            // ---- Stats ----
+            let statsRow = '';
+            if (sorted.length > 0) {
+                const pb   = sorted[0].deaths;
+                const avg  = Math.round(runs.reduce((s, r) => s + r.deaths, 0) / runs.length);
+                const worst = sorted[sorted.length - 1].deaths;
+
+                // Trend: compare last 5 runs chronologically to detect improvement
+                const chrono = [...runs].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+                let trendIcon = '';
+                if (chrono.length >= 2) {
+                    const half = Math.max(1, Math.floor(chrono.length / 2));
+                    const avgOld = chrono.slice(0, half).reduce((s,r) => s+r.deaths, 0) / half;
+                    const avgNew = chrono.slice(-half).reduce((s,r) => s+r.deaths, 0) / half;
+                    if (avgNew < avgOld - 0.5)       trendIcon = '📈 Improving!';
+                    else if (avgNew > avgOld + 0.5)  trendIcon = '📉 Needs work';
+                    else                              trendIcon = '↔️ Stable';
+                }
+
+                statsRow = `
+                    <div class="noclip-stats-row">
+                        <span class="noclip-stat-chip">💀 PB: ${pb} deaths</span>
+                        <span class="noclip-stat-chip">📊 Average: ${avg}</span>
+                        <span class="noclip-stat-chip">📉 Worst: ${worst}</span>
+                        <span class="noclip-stat-chip">🔢 ${runs.length} run${runs.length > 1 ? 's' : ''}</span>
+                        ${trendIcon ? `<span class="noclip-stat-chip">${trendIcon}</span>` : ''}
+                    </div>
+                `;
+            }
+
+            // ---- Mini trend bar chart (last 10 runs chronologically) ----
+            let trendHtml = '';
+            if (runs.length >= 2) {
+                const chrono = [...runs].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+                const last10 = chrono.slice(-10);
+                const maxD   = Math.max(...last10.map(r => r.deaths), 1);
+
+                const bars = last10.map((r, i) => {
+                    const heightPct = Math.round((r.deaths / maxD) * 100);
+                    // Color: green if below avg, red if above
+                    const avg = last10.reduce((s, x) => s + x.deaths, 0) / last10.length;
+                    const col = r.deaths <= avg ? 'var(--easy)' : 'var(--hard)';
+                    const shortDate = r.date.slice(5); // MM-DD
+                    return `
+                        <div class="noclip-bar-col" style="height:100%;">
+                            <div class="noclip-bar-val">${r.deaths}</div>
+                            <div style="flex:1;display:flex;align-items:flex-end;width:100%;">
+                                <div class="noclip-bar" style="height:${Math.max(heightPct,4)}%;background:${col};width:100%;" title="${r.date} — ${r.deaths} deaths"></div>
+                            </div>
+                            <div class="noclip-bar-date">${shortDate}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                trendHtml = `
+                    <div class="noclip-trend-wrapper">
+                        <div class="noclip-trend-title">📊 Death trend (${last10.length} last runs) — green = below average</div>
+                        <div class="noclip-graph" style="height:80px;">${bars}</div>
+                    </div>
+                `;
+            }
+
+            // ---- List (sorted by deaths asc = best first) ----
+            const listHtml = sorted.length === 0
+                ? `<div class="noclip-empty">No noclip runs recorded — get started!</div>`
+                : `<div class="noclip-list">
+                    ${sorted.map((run, idx) => {
+                        const rank = idx + 1;
+                        let rankClass = 'run-rank run-rank-other';
+                        let rankLabel = `#${rank}`;
+                        if (rank === 1) { rankClass = 'run-rank noclip-rank-1'; rankLabel = '🏆'; }
+                        else if (rank === 2) { rankClass = 'run-rank noclip-rank-2'; rankLabel = '🥈'; }
+                        else if (rank === 3) { rankClass = 'run-rank noclip-rank-3'; rankLabel = '🥉'; }
+
+                        // Delta vs next-better entry
+                        let deltaHtml = '';
+                        if (idx > 0) {
+                            const diff = run.deaths - sorted[idx - 1].deaths;
+                            if (diff > 0) deltaHtml = `<span class="noclip-delta noclip-delta-worse">+${diff} 💀</span>`;
+                        }
+
+                        const crownHtml = rank === 1 ? `<span class="noclip-pb-badge">⭐ PB</span>` : '';
+
+                        return `
+                            <div class="noclip-entry">
+                                <div class="${rankClass}">${rankLabel}</div>
+                                <div class="noclip-info">
+                                    <div class="noclip-date-row">
+                                        <span class="noclip-date-txt">${run.date}</span>
+                                        ${crownHtml}
+                                        ${deltaHtml}
+                                    </div>
+                                    ${run.note ? `<span class="noclip-note-txt">"${run.note}"</span>` : ''}
+                                </div>
+                                <div class="noclip-deaths-col">
+                                    <span class="noclip-deaths-val">${run.deaths}</span>
+                                    <span class="noclip-deaths-lbl">deaths</span>
+                                </div>
+                                <button class="noclip-delete-btn" onclick="deleteNoclipRun(${demon.id}, ${run.id})" title="Delete">✕</button>
+                            </div>
+                        `;
+                    }).join('')}
+                  </div>`;
+
+            const pbLabel = sorted.length > 0
+                ? `<span style="background:rgba(123,237,159,0.15);border:1px solid var(--easy);border-radius:10px;padding:0.1rem 0.6rem;font-size:0.75rem;color:var(--easy);">PB: ${sorted[0].deaths} 💀</span>`
+                : '';
+
+            return `
+                <div class="noclip-section">
+                    <div class="noclip-section-header" onclick="toggleNoclipSection(${demon.id})">
+                        <div class="noclip-section-title">
+                            💀 Noclip Runs
+                            ${runs.length > 0 ? `<span style="background:rgba(255,107,107,0.2);border:1px solid var(--hard);border-radius:10px;padding:0.1rem 0.5rem;font-size:0.75rem;">${runs.length} runs</span>` : ''}
+                            ${pbLabel}
+                        </div>
+                        <span class="noclip-section-toggle" id="noclip-toggle-${demon.id}">▼</span>
+                    </div>
+                    <div class="noclip-section-body" id="noclip-body-${demon.id}">
+                        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.85rem;">
+                            💡 In noclip mode you pass through walls — the fewer deaths, the better you know the level. Ranking goes from <strong style="color:var(--easy)">fewest deaths (best)</strong> to most.
+                        </p>
+                        <div class="add-noclip-form">
+                            <div class="add-noclip-field">
+                                <label>Deaths</label>
+                                <input type="number" id="noclip-deaths-${demon.id}" min="0" placeholder="e.g. 12">
+                            </div>
+                            <div class="add-noclip-field">
+                                <label>Note (optional)</label>
+                                <input type="text" id="noclip-note-${demon.id}" placeholder="e.g. missed the kicker section again...">
+                            </div>
+                            <button class="add-noclip-btn" onclick="addNoclipRun(${demon.id})">➕ Add</button>
+                        </div>
+                        ${statsRow}
+                        ${trendHtml}
+                        ${listHtml}
+                    </div>
+                </div>
+            `;
+        }
+        // ===================================================================
+
+        function addRun(demonId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon) return;
+
+            const fromInput = document.getElementById(`run-from-${demonId}`);
+            const toInput   = document.getElementById(`run-to-${demonId}`);
+
+            const from = parseInt(fromInput.value);
+            const to   = parseInt(toInput.value);
+
+            if (isNaN(from) || isNaN(to) || from < 0 || to > 100 || from >= to) {
+                showNotification('⚠️ Invalid run: make sure Start < End and values are between 0 and 100.');
+                return;
+            }
+
+            if (!demon.runs) demon.runs = [];
+
+            demon.runs.push({
+                id: Date.now(),
+                from: from,
+                to: to,
+                completion: to - from,   // size of the completed range
+                date: new Date().toISOString().split('T')[0]
+            });
+
+            fromInput.value = '';
+            toInput.value   = '';
+
+            saveData();
+            renderDemons();
+        }
+
+        function deleteRun(demonId, runId) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon || !demon.runs) return;
+            demon.runs = demon.runs.filter(r => r.id !== runId);
+            saveData();
+            renderDemons();
+        }
+
+        // Delete all runs with the same from→to (used by grouped view)
+        function deleteRunGroup(demonId, from, to) {
+            const demon = demons.find(d => d.id === demonId);
+            if (!demon || !demon.runs) return;
+            const count = demon.runs.filter(r => r.from === from && r.to === to).length;
+            if (count > 1 && !confirm(`Delete les ${count} runs ${from}%→${to}% ?`)) return;
+            demon.runs = demon.runs.filter(r => !(r.from === from && r.to === to));
+            saveData();
+            renderDemons();
+        }
+
+        function buildRunsHtml(demon) {
+            const runs = demon.runs || [];
+            const normalPct = demon.maxPercent || 0;
+
+            // ---- 1. Group identical from→to runs ----
+            const groupMap = {};
+            runs.forEach(r => {
+                const key = `${r.from}-${r.to}`;
+                if (!groupMap[key]) groupMap[key] = { from: r.from, to: r.to, completion: r.to - r.from, count: 0, ids: [], lastDate: r.date };
+                groupMap[key].count++;
+                groupMap[key].ids.push(r.id);
+                if (r.date > groupMap[key].lastDate) groupMap[key].lastDate = r.date;
+            });
+            const groups = Object.values(groupMap);
+
+            // ---- 2. Sort groups: biggest completion first, then furthest to ----
+            const sorted = [...groups].sort((a, b) => {
+                if (b.completion !== a.completion) return b.completion - a.completion;
+                return b.to - a.to;
+            });
+
+            // ---- 3. Coverage map: heat from how many runs cover each % point ----
+            // Build a 100-slot heat array
+            const heat = new Array(100).fill(0);
+            runs.forEach(r => {
+                for (let i = r.from; i < r.to; i++) heat[i]++;
+            });
+            const maxHeat = Math.max(...heat, 1);
+
+            // Build contiguous colored segments for the track
+            // We merge consecutive cells with same heat value into one segment
+            let segments = [];
+            let si = 0;
+            while (si < 100) {
+                if (heat[si] === 0) { si++; continue; }
+                let h = heat[si], start = si;
+                while (si < 100 && heat[si] === h) si++;
+                segments.push({ from: start, to: si, heat: h });
+            }
+
+            // Color based on heat (1 = gold, 2 = orange, 3+ = green)
+            function heatColor(h) {
+                if (h >= 4) return '#7bed9f';       // green - very covered
+                if (h === 3) return '#48cae4';       // cyan
+                if (h === 2) return '#ffd700';       // gold
+                return 'rgba(255,165,0,0.7)';        // orange - once
+            }
+
+            const segHtml = segments.map(s => {
+                const left  = s.from;
+                const width = s.to - s.from;
+                return `<div class="coverage-segment" style="left:${left}%;width:${width}%;background:${heatColor(s.heat)};" title="${s.from}%→${s.to}% (x${s.heat})"></div>`;
+            }).join('');
+
+            // Tick marks at 0,10,20,...,100
+            const tickHtml = [0,10,20,30,40,50,60,70,80,90,100].map(t =>
+                `<div class="coverage-tick" style="left:${t}%"></div>
+                 <div class="coverage-tick-label" style="left:${t}%">${t}</div>`
+            ).join('');
+
+            // ---- 4. Coverage map HTML ----
+            const covMapHtml = `
+                <div class="coverage-map-wrapper">
+                    <div class="coverage-map-title">
+                        🗺️ Run coverage map
+                    </div>
+                    <div class="coverage-map-legend">
+                        <div class="coverage-legend-item">
+                            <div class="coverage-legend-dot" style="background:linear-gradient(90deg,var(--accent-primary),var(--accent-secondary));opacity:0.45;"></div>
+                            Normal mode (${normalPct}%)
+                        </div>
+                        <div class="coverage-legend-item"><div class="coverage-legend-dot" style="background:rgba(255,165,0,0.7);"></div>×1</div>
+                        <div class="coverage-legend-item"><div class="coverage-legend-dot" style="background:#ffd700;"></div>×2</div>
+                        <div class="coverage-legend-item"><div class="coverage-legend-dot" style="background:#48cae4;"></div>×3</div>
+                        <div class="coverage-legend-item"><div class="coverage-legend-dot" style="background:#7bed9f;"></div>×4+</div>
+                    </div>
+                    <div class="coverage-track">
+                        <div class="coverage-normal-bar" style="width:${normalPct}%"></div>
+                        ${segHtml}
+                    </div>
+                    <div class="coverage-ticks">${tickHtml}</div>
+                </div>
+            `;
+
+            // ---- 5. Stats row ----
+            let statsRow = '';
+            if (sorted.length > 0) {
+                const best     = sorted[0];
+                const totalRuns = runs.length;
+                const avgComp  = Math.round(groups.reduce((s, g) => s + g.completion * g.count, 0) / totalRuns);
+                const furthest = groups.reduce((b, g) => g.to > b.to ? g : b, groups[0]);
+                const coveredPct = heat.filter(h => h > 0).length;
+                statsRow = `
+                    <div class="run-stats-row">
+                        <span class="run-stat-chip">🏅 Best: ${best.from}–${best.to}% (${best.completion}%)</span>
+                        <span class="run-stat-chip">🎯 Furthest: ${furthest.to}%</span>
+                        <span class="run-stat-chip">📊 Avg: ${avgComp}%</span>
+                        <span class="run-stat-chip">🗺️ Coverage: ${coveredPct}%</span>
+                        <span class="run-stat-chip">🔢 ${totalRuns} run${totalRuns > 1 ? 's' : ''} / ${groups.length} segment${groups.length > 1 ? 's' : ''}</span>
+                    </div>
+                `;
+            }
+
+            // ---- 6. Runs list (grouped) ----
+            const listHtml = sorted.length === 0
+                ? `<div class="runs-empty">No runs recorded — add your first one!</div>`
+                : `<div class="runs-list">
+                    ${sorted.map((grp, idx) => {
+                        const rank = idx + 1;
+                        let rankClass = 'run-rank-other';
+                        let rankLabel = `#${rank}`;
+                        if (rank === 1) { rankClass = 'run-rank-1'; rankLabel = '🥇'; }
+                        else if (rank === 2) { rankClass = 'run-rank-2'; rankLabel = '🥈'; }
+                        else if (rank === 3) { rankClass = 'run-rank-3'; rankLabel = '🥉'; }
+
+                        let barColor, compClass;
+                        if (grp.completion >= 80)      { barColor = 'var(--easy)';        compClass = 'run-completion-full'; }
+                        else if (grp.completion >= 40)  { barColor = 'var(--accent-gold)'; compClass = 'run-completion-high'; }
+                        else                            { barColor = 'var(--hard)';        compClass = 'run-completion-mid'; }
+
+                        const barGradient = grp.to > 0
+                            ? `linear-gradient(90deg, transparent ${(grp.from / grp.to * 100).toFixed(1)}%, ${barColor} ${(grp.from / grp.to * 100).toFixed(1)}%)`
+                            : barColor;
+
+                        // Count badge (only if > 1 occurrence)
+                        const countBadge = grp.count > 1
+                            ? `<span class="run-count-badge">×${grp.count}</span>`
+                            : '';
+
+                        // Delete button: deletes ALL runs with this from→to
+                        const deleteAllBtn = `<button class="run-delete-btn" onclick="deleteRunGroup(${demon.id}, ${grp.from}, ${grp.to})" title="Delete ce(s) run(s)">✕</button>`;
+
+                        return `
+                            <div class="run-entry">
+                                <div class="run-rank ${rankClass}">${rankLabel}</div>
+                                <div class="run-bar-container">
+                                    <div class="run-label">
+                                        <span class="run-range">${grp.from}% → ${grp.to}%</span>
+                                        <div style="display:flex;align-items:center;gap:0.4rem;">
+                                            ${countBadge}
+                                            <span class="run-completion ${compClass}">+${grp.completion}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="run-mini-bar-bg">
+                                        <div class="run-mini-bar-fill" style="width:${grp.to}%;background:${barGradient};"></div>
+                                    </div>
+                                </div>
+                                <span class="run-date">${grp.lastDate}</span>
+                                ${deleteAllBtn}
+                            </div>
+                        `;
+                    }).join('')}
+                  </div>`;
+
+            return `
+                <div class="runs-section">
+                    <div class="runs-section-header" onclick="toggleRunsSection(${demon.id})">
+                        <div class="runs-section-title">
+                            🏃 Practice runs (segments)
+                            ${runs.length > 0 ? `<span style="background:rgba(255,215,0,0.2);border:1px solid var(--accent-gold);border-radius:10px;padding:0.1rem 0.5rem;font-size:0.75rem;">${runs.length} runs</span>` : ''}
+                        </div>
+                        <span class="runs-section-toggle" id="runs-toggle-${demon.id}">▼</span>
+                    </div>
+                    <div class="runs-section-body" id="runs-body-${demon.id}">
+                        <div class="add-run-form">
+                            <div class="add-run-field">
+                                <label>Start (%)</label>
+                                <input type="number" id="run-from-${demon.id}" min="0" max="99" placeholder="Ex: 75">
+                            </div>
+                            <div class="add-run-field">
+                                <label>End (%)</label>
+                                <input type="number" id="run-to-${demon.id}" min="1" max="100" placeholder="Ex: 100">
+                            </div>
+                            <button class="add-run-btn" onclick="addRun(${demon.id})">➕ Add</button>
+                        </div>
+                        ${runs.length > 0 ? covMapHtml : ''}
+                        ${statsRow}
+                        ${listHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===================================================================
+
+        function renderDemons() {
+            const inProgressDemons = demons.filter(d => d.status === 'In Progress');
+            let filteredCompletedshed = demons.filter(d => d.status === 'Completed');
+            const diffFilter = document.getElementById('filter-difficulty').value;
+            if (diffFilter) filteredCompletedshed = filteredCompletedshed.filter(d => d.difficulty === diffFilter);
+            const sortBy = document.getElementById('sort-by').value;
+            filteredCompletedshed.sort((a, b) => {
+                switch(sortBy) {
+                    case 'date-desc': return new Date(b.date || 0) - new Date(a.date || 0);
+                    case 'date-asc': return new Date(a.date || 0) - new Date(b.date || 0);
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'gddl-desc': return (b.gddl || 0) - (a.gddl || 0);
+                    case 'gddl-asc': return (a.gddl || 0) - (b.gddl || 0);
+                    case 'attempts-desc': return b.attempts - a.attempts;
+                    case 'time-desc': return b.time - a.time;
+                    default: return 0;
+                }
+            });
+            renderDemonList('in-progress-list', inProgressDemons, true);
+            renderDemonList('finished-list', filteredCompletedshed, false);
+        }
+
+        function renderDemonList(containerId, demonsList, isInProgress) {
+            const container = document.getElementById(containerId);
+            if (demonsList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎮</div>
+                        <h3>${isInProgress ? 'No demons in progress' : 'No completed demons'}</h3>
+                        <p>${isInProgress ? 'Start a new demon!' : 'Add your first completed demon!'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = demonsList.map(demon => {
+                const diffClass = demon.difficulty.toLowerCase().replace(' ', '-');
+                const statusClass = demon.status.toLowerCase().replace(' ', '');
+
+                let statsHtml = '<div class="demon-stats">';
+                if (demon.date) statsHtml += `<div class="stat"><span class="stat-label">Date</span><span class="stat-value">${new Date(demon.date).toLocaleDateString('fr-FR')}</span></div>`;
+                if (demon.attempts > 0) statsHtml += `<div class="stat"><span class="stat-label">Attempts</span><span class="stat-value">${demon.attempts.toLocaleString()}</span></div>`;
+                if (demon.maxPercent > 0 && !isInProgress) statsHtml += `<div class="stat"><span class="stat-label">% Max</span><span class="stat-value">${demon.maxPercent}%</span></div>`;
+                if (demon.time > 0) statsHtml += `<div class="stat"><span class="stat-label">Temps</span><span class="stat-value">${demon.time}h</span></div>`;
+                statsHtml += '</div>';
+                const hasStats = demon.date || demon.attempts > 0 || demon.maxPercent > 0 || demon.time > 0;
+
+                // =====================================================
+                // BLOC DE PROGRESSION REVU avec champ attempts intégré
+                // =====================================================
+                let progressHtml = '';
+                if (isInProgress) {
+                    // Historique des % 
+                    let historyHtml = '';
+                    if (demon.percentHistory && demon.percentHistory.length > 0) {
+                        historyHtml += `
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(0, 217, 255, 0.05); border-radius: 6px;">
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">📊 Historique des best %</div>
+                                <div style="color: var(--accent-primary); font-weight: 600; font-size: 1rem;">
+                                    ${demon.percentHistory.join(' | ')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Historique des attempts (3 dernières entrées)
+                    let attemptsHistoryHtml = '';
+                    if (demon.attemptsHistory && demon.attemptsHistory.length > 0) {
+                        const last3 = demon.attemptsHistory.slice(-3).reverse();
+                        attemptsHistoryHtml = `
+                            <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(255, 0, 255, 0.05); border-radius: 6px;">
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">🎮 Session history</div>
+                                ${last3.map(entry => `
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.25rem 0; border-bottom: 1px solid var(--border);">
+                                        <span style="color: var(--text-secondary);">${entry.date}</span>
+                                        <span style="color: var(--accent-secondary);">+${entry.added} attempts</span>
+                                        <span style="color: var(--accent-primary);">${entry.percent}%</span>
+                                        <span style="color: var(--text-secondary);">Total: ${entry.total.toLocaleString()}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    progressHtml = `
+                        <div class="progress-container">
+                            <div class="progress-update-grid">
+                                <div class="progress-update-field">
+                                    <label>🎯 Percentage reached</label>
+                                    <input 
+                                        type="number" 
+                                        id="percent-input-${demon.id}"
+                                        min="0" max="100" 
+                                        value="${demon.maxPercent || 0}"
+                                        placeholder="0 – 100"
+                                    >
+                                </div>
+                                <div class="progress-update-field">
+                                    <label>🎮 Attempts to add</label>
+                                    <input 
+                                        type="number" 
+                                        id="attempts-input-${demon.id}"
+                                        min="0" 
+                                        placeholder="e.g. 150"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="attempts-live-counter">
+                                🎮 Total current attempts:&nbsp;<span>${(demon.attempts || 0).toLocaleString()}</span>
+                            </div>
+
+                            <button class="progress-update-btn" onclick="updateProgress(${demon.id})" style="margin-top: 0.75rem;">
+                                💾 Save progress
+                            </button>
+
+                            <div class="progress-bar-wrapper" style="margin-top: 0.75rem;">
+                                <div class="progress-bar" style="width: ${demon.maxPercent || 0}%">
+                                    ${demon.maxPercent || 0}%
+                                </div>
+                            </div>
+
+                            ${historyHtml}
+                            ${attemptsHistoryHtml}
+                        </div>
+                        ${buildRunsHtml(demon)}
+                        ${buildPracticeHtml(demon)}
+                        ${buildNoclipHtml(demon)}
+                    `;
+                }
+                // =====================================================
+
+                return `
+                    <div class="demon-card ${isInProgress ? 'in-progress' : ''}">
+                        <div class="demon-header">
+                            <div class="demon-name">${demon.name}</div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                ${demon.gddl ? `<span style="padding: 0.4rem 0.8rem; background: rgba(0, 217, 255, 0.15); border: 2px solid var(--accent-primary); border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: var(--accent-primary); font-family: 'Orbitron', sans-serif;">GDDL ${demon.gddl}</span>` : ''}
+                                <span class="difficulty-badge difficulty-${diffClass}">${demon.difficulty}</span>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <span class="status-badge status-${statusClass}">${demon.status}</span>
+                            ${demon.levelId ? `<span style="margin-left: 1rem; color: var(--text-secondary);">ID: ${demon.levelId}</span>` : ''}
+                        </div>
+                        ${progressHtml}
+                        ${hasStats ? statsHtml : ''}
+                        ${demon.comment ? `<div class="comment">"${demon.comment}"</div>` : ''}
+                        <div class="demon-actions">
+                            ${isInProgress ? `<button class="btn btn-small btn-complete" onclick="markAsComplete(${demon.id})">✅ Mark as completed</button>` : ''}
+                            <button class="btn btn-small btn-delete" onclick="deleteDemon(${demon.id})">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const finishedDemons = demons.filter(d => d.status === 'Completed');
+            const difficulties = ['Easy Demon', 'Medium Demon', 'Hard Demon', 'Insane Demon', 'Extreme Demon'];
+            const colors = { 'Easy Demon': 'var(--easy)', 'Medium Demon': 'var(--medium)', 'Hard Demon': 'var(--hard)', 'Insane Demon': 'var(--insane)', 'Extreme Demon': 'var(--extreme)' };
+
+            document.getElementById('main-stats').innerHTML = `
+                <div class="stat-card"><div class="stat-card-title">Total completed demons</div><div class="stat-card-value">${finishedDemons.length}</div></div>
+                <div class="stat-card"><div class="stat-card-title">Demons in progress</div><div class="stat-card-value" style="color: var(--medium)">${demons.filter(d => d.status === 'In Progress').length}</div></div>
+            ` + difficulties.map(diff => {
+                const count = finishedDemons.filter(d => d.difficulty === diff).length;
+                return `<div class="stat-card"><div class="stat-card-title">${diff}</div><div class="stat-card-value" style="color: ${colors[diff]}">${count}</div></div>`;
+            }).join('');
+
+            const sortedByDate = finishedDemons.filter(d => d.date).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedByTime = [...demons].sort((a, b) => b.time - a.time);
+            const sortedByAttempts = [...demons].sort((a, b) => b.attempts - a.attempts);
+            const hardestDemon = finishedDemons.filter(d => d.gddl).sort((a, b) => b.gddl - a.gddl)[0];
+
+            document.getElementById('records-stats').innerHTML = `
+                <div class="stat-card"><div class="stat-card-title">🥇 First demon fini</div><div class="stat-card-value" style="font-size: 1.5rem;">${sortedByDate[0]?.name || 'N/A'}</div></div>
+                <div class="stat-card"><div class="stat-card-title">📆 Last demon fini</div><div class="stat-card-value" style="font-size: 1.5rem;">${sortedByDate[sortedByDate.length - 1]?.name || 'N/A'}</div></div>
+                <div class="stat-card">
+                    <div class="stat-card-title">🔥 Hardest demon (GDDL)</div>
+                    <div class="stat-card-value" style="font-size: 1.5rem;">${hardestDemon?.name || 'N/A'}</div>
+                    ${hardestDemon ? `<div style="color: var(--accent-primary); margin-top: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 1.1rem;">GDDL ${hardestDemon.gddl}</div>` : ''}
+                </div>
+                <div class="stat-card"><div class="stat-card-title">🔝 Most time (temps)</div><div class="stat-card-value" style="font-size: 1.5rem;">${sortedByTime[0]?.name || 'N/A'}</div><div style="color: var(--text-secondary); margin-top: 0.5rem;">${sortedByTime[0]?.time || 0}h</div></div>
+                <div class="stat-card"><div class="stat-card-title">🎯 Plus de attempts</div><div class="stat-card-value" style="font-size: 1.5rem;">${sortedByAttempts[0]?.name || 'N/A'}</div><div style="color: var(--text-secondary); margin-top: 0.5rem;">${sortedByAttempts[0]?.attempts.toLocaleString() || 0}</div></div>
+            `;
+
+            const totalTime = demons.reduce((sum, d) => sum + d.time, 0);
+            const avgTime = finishedDemons.length ? totalTime / finishedDemons.length : 0;
+            const totalAttempts = demons.reduce((sum, d) => sum + d.attempts, 0);
+            const avgAttempts = finishedDemons.length ? totalAttempts / finishedDemons.length : 0;
+            const avgGDDL = finishedDemons.length > 0 ? (finishedDemons.reduce((sum, d) => sum + (d.gddl || 0), 0) / finishedDemons.length) : 0;
+
+            document.getElementById('time-stats').innerHTML = `
+                <div class="stat-card"><div class="stat-card-title">⏳ Total time</div><div class="stat-card-value">${totalTime.toFixed(1)}h</div></div>
+                <div class="stat-card"><div class="stat-card-title">📉 Temps moyen</div><div class="stat-card-value">${avgTime.toFixed(1)}h</div></div>
+                <div class="stat-card"><div class="stat-card-title">🎮 Attempts moyennes</div><div class="stat-card-value">${Math.round(avgAttempts).toLocaleString()}</div></div>
+                <div class="stat-card"><div class="stat-card-title">📈 Progression</div><div class="stat-card-value">${demons.length ? Math.round(finishedDemons.length / demons.length * 100) : 0}%</div></div>
+                <div class="stat-card">
+                    <div class="stat-card-title">📊 Average difficulty (GDDL)</div>
+                    <div class="stat-card-value" style="color: var(--accent-gold)">${avgGDDL > 0 ? avgGDDL.toFixed(2) : '0.00'}</div>
+                    ${avgGDDL > 0 ? `<div style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">${getDifficultyFromGDDL(avgGDDL)}</div>` : ''}
+                </div>
+            `;
+            renderChartsInStats();
+        }
+
+        function renderChartsInStats() {
+            const finishedDemons = demons.filter(d => d.status === 'Completed');
+            const difficulties = ['Easy Demon', 'Medium Demon', 'Hard Demon', 'Insane Demon', 'Extreme Demon'];
+            const colors = { 'Easy Demon': 'var(--easy)', 'Medium Demon': 'var(--medium)', 'Hard Demon': 'var(--hard)', 'Insane Demon': 'var(--insane)', 'Extreme Demon': 'var(--extreme)' };
+            const maxCount = Math.max(...difficulties.map(d => finishedDemons.filter(demon => demon.difficulty === d).length), 1);
+            document.getElementById('difficulty-chart-stats').innerHTML = difficulties.map(diff => {
+                const count = finishedDemons.filter(d => d.difficulty === diff).length;
+                return `<div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">${diff}</span><span style="color: ${colors[diff]}; font-weight: 700;">${count}</span></div><div class="difficulty-bar-fill" style="width: ${(count/maxCount)*100}%; background: ${colors[diff]}; color: ${diff === 'Extreme Demon' ? 'white' : 'black'};">${count > 0 ? count : ''}</div></div>`;
+            }).join('');
+            const total = demons.length, finished = finishedDemons.length, inProgress = demons.filter(d => d.status === 'In Progress').length;
+            document.getElementById('progress-chart-stats').innerHTML = `
+                <div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">Completed demons</span><span style="color: var(--easy); font-weight: 700;">${finished} / ${total}</span></div><div class="difficulty-bar-fill" style="width: ${total ? (finished/total)*100 : 0}%; background: var(--easy); color: black;">${finished > 0 ? Math.round((finished/total)*100) + '%' : ''}</div></div>
+                <div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">In Progress</span><span style="color: var(--medium); font-weight: 700;">${inProgress} / ${total}</span></div><div class="difficulty-bar-fill" style="width: ${total ? (inProgress/total)*100 : 0}%; background: var(--medium); color: black;">${inProgress > 0 ? Math.round((inProgress/total)*100) + '%' : ''}</div></div>
+            `;
+        }
+
+        function updateCharts() {
+            const finishedDemons = demons.filter(d => d.status === 'Completed');
+            const difficulties = ['Easy Demon', 'Medium Demon', 'Hard Demon', 'Insane Demon', 'Extreme Demon'];
+            const colors = { 'Easy Demon': 'var(--easy)', 'Medium Demon': 'var(--medium)', 'Hard Demon': 'var(--hard)', 'Insane Demon': 'var(--insane)', 'Extreme Demon': 'var(--extreme)' };
+            const maxCount = Math.max(...difficulties.map(d => finishedDemons.filter(demon => demon.difficulty === d).length), 1);
+            document.getElementById('difficulty-chart').innerHTML = difficulties.map(diff => {
+                const count = finishedDemons.filter(d => d.difficulty === diff).length;
+                return `<div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">${diff}</span><span style="color: ${colors[diff]}; font-weight: 700;">${count}</span></div><div class="difficulty-bar-fill" style="width: ${(count/maxCount)*100}%; background: ${colors[diff]}; color: ${diff === 'Extreme Demon' ? 'white' : 'black'};">${count > 0 ? count : ''}</div></div>`;
+            }).join('');
+            const total = demons.length, finished = finishedDemons.length, inProgress = demons.filter(d => d.status === 'In Progress').length;
+            document.getElementById('progress-chart').innerHTML = `
+                <div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">Completed demons</span><span style="color: var(--easy); font-weight: 700;">${finished} / ${total}</span></div><div class="difficulty-bar-fill" style="width: ${total ? (finished/total)*100 : 0}%; background: var(--easy); color: black;">${finished > 0 ? Math.round((finished/total)*100) + '%' : ''}</div></div>
+                <div class="difficulty-bar"><div class="difficulty-bar-header"><span style="font-weight: 600;">In Progress</span><span style="color: var(--medium); font-weight: 700;">${inProgress} / ${total}</span></div><div class="difficulty-bar-fill" style="width: ${total ? (inProgress/total)*100 : 0}%; background: var(--medium); color: black;">${inProgress > 0 ? Math.round((inProgress/total)*100) + '%' : ''}</div></div>
+            `;
+        }
+
+        document.getElementById('note-date').value = new Date().toISOString().split('T')[0];
+
+        let allowLeave = false;
+
+        function checkCanLeave() {
+            const allChecked = checklistItems.every(item => item.checked);
+            const today = new Date().toISOString().split('T')[0];
+            const todayNote = dailyNotes.find(note => note.date === today && note.goal);
+            return allChecked && todayNote;
+        }
+
+        window.addEventListener('beforeunload', function(e) {
+            if (allowLeave) return undefined;
+            if (!checkCanLeave()) {
+                const message = 'Warning! You haven\'t completed your checklist or set a goal for today.';
+                e.preventDefault();
+                e.returnValue = message;
+                return message;
+            }
+        });
+
+        function updatePageStatus() {
+            const statusBar = document.getElementById('page-status-bar');
+            if (!statusBar) return;
+            const canLeave = checkCanLeave();
+            const allChecked = checklistItems.every(item => item.checked);
+            const today = new Date().toISOString().split('T')[0];
+            const todayNote = dailyNotes.find(note => note.date === today && note.goal);
+            if (canLeave) {
+                statusBar.style.background = 'linear-gradient(90deg, rgba(123, 237, 159, 0.2), rgba(123, 237, 159, 0.1))';
+                statusBar.style.borderColor = 'var(--easy)';
+                statusBar.innerHTML = `<div style="display: flex; align-items: center; gap: 1rem;"><div style="font-size: 2rem;">✅</div><div><div style="font-weight: 700; color: var(--easy); font-size: 1.1rem;">Ready to play!</div><div style="color: var(--text-secondary); font-size: 0.9rem;">You have completed your checklist and set your daily goal</div></div></div>`;
+            } else {
+                statusBar.style.background = 'linear-gradient(90deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.1))';
+                statusBar.style.borderColor = 'var(--hard)';
+                let missingTasks = [];
+                if (!allChecked) missingTasks.push(`✅ Checklist (${checklistItems.filter(i => !i.checked).length} task(s) remaining(s))`);
+                if (!todayNote) missingTasks.push('🎯 Daily goal');
+                statusBar.innerHTML = `<div style="display: flex; align-items: center; gap: 1rem;"><div style="font-size: 2rem;">⚠️</div><div style="flex: 1;"><div style="font-weight: 700; color: var(--hard); font-size: 1.1rem;">Preparation incomplete</div><div style="color: var(--text-secondary); font-size: 0.9rem;">Still missing: ${missingTasks.join(' • ')}</div></div></div>`;
+            }
+        }
+
+        function toggleChecklistItem(id) {
+            const item = checklistItems.find(i => i.id === id);
+            if (item) {
+                item.checked = !item.checked;
+                saveData(); renderChecklist(); updatePageStatus();
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
